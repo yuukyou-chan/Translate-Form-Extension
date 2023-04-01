@@ -22,11 +22,7 @@ const checkPage = (func) => {
         let tab = tabs.length ? tabs[0] : null;
         if (tab) {
             if (/^(http(s)?|file):\/\//.test(tab.url)) {
-                //依赖注入
-                chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    func,
-                });
+                func(tab)
             } else {
                 sendMessage("抱歉此工具无法在当前页面使用");
             }
