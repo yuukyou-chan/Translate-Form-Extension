@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import './Popup.css';
-import { Button, Divider } from 'antd';
-import { getAllImage } from './handle';
+import { Button, Table } from 'antd';
 import checkPage from './checkPage';
-import ImgListShow from '../../containers/imgList/img-list';
 
 const Popup = () => {
-  // 保存图片链接
-  const [imgList, setImgList] = useState([]);
-  // 保存已经勾选了的图片
-  const [checkedImg, setCheckImg] = useState([]);
   const [html, setHtml] = useState('6');
+  const [microConfigObj, setMicroConfigObj] = useState({});
+  const [dataSource, setDataSource] = useState([]);
 
   // 注入脚本
   const insertScripts = () => {
@@ -28,26 +24,27 @@ const Popup = () => {
   // 获取当前网页源代码
   const getHtml = () => {
     let microConfigScript = document.head.querySelector(
-      'script[shield-web-config-inject=""]'
+      'script[shield-web-config-inject]'
     );
-    // let microConfig = window.__microConfig;
-
-    let microConfig = microConfigScript.textContent;
-    const reg = /window\.__microConfig\s*=\s*({[^{}]*})/s;
-    let obj = microConfig.match(reg);
-    // let extractedObject = JSON.parse(obj);
-    console.log('document', microConfig, obj);
-
-    return microConfig;
+    console.log('microConfigScript', microConfigScript, document.head);
+    return microConfigScript;
   };
 
-  //获取当期勾选了的图片
-  const getCheckedImg = (list) => {
-    setCheckImg(list);
-  };
-
-  //下载图片
-  const downLoadImg = () => {};
+  useEffect(() => {
+    console.log('microConfigObj', microConfigObj);
+    if (microConfigObj) {
+      const data = [];
+      Object.keys(microConfigObj).forEach((key, index) => {
+        console.log();
+        data.push({
+          app: key,
+          version: microConfigObj[key].match(/(\d+\.\d+\.\d+)$/)[0],
+        });
+      });
+      setDataSource(data);
+      console.log('data', data);
+    }
+  }, [microConfigObj]);
 
   useEffect(() => {
     insertScripts();
@@ -56,37 +53,42 @@ const Popup = () => {
     //   sender,
     //   sendResponse
     // ) {
-    //   if (request.message === 'html_fetched') {
-    //     // Handle the HTML content sent from the background script
-    //     console.log('HTML Content in Popup:', request.html);
-    //     setHtml(request.html);
+    //   console.log('POPUP收到来自bg的消息', request);
+    //   if (request.action === 'sendMicroConfigObjTobg') {
+    //     setMicroConfigObj({ ...request.microConfigObj });
     //   }
     // });
+    chrome.storage.sync.get(['microConfigObj'], function (data) {
+      console.log('DOMContentLoadedStorage', data);
+      setMicroConfigObj({ ...data.microConfigObj });
+    });
+
+    window.onload = () => {
+      chrome.storage.sync.get(['microConfigObj'], function (data) {
+        console.log('OnloadStorage', data);
+        setMicroConfigObj({ ...data.microConfigObj });
+      });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+ 
+    });
   }, []);
 
   return (
     <div className="App">
       <div className="button-tool">
-        <Button type="primary" onClick={getHtml}>
-          获取图片
-        </Button>
-        <Button
-          type="primary"
-          disabled={checkedImg.length === 0}
-          onClick={downLoadImg}
-        >
-          下载图片
-        </Button>
+        <Table
+          size="small"
+          columns={[
+            { title: '子应用名', dataIndex: 'app' },
+            { title: '版本', dataIndex: 'version' },
+            { title: '操作' },
+          ]}
+          dataSource={dataSource}
+          pagination={false}
+        ></Table>
       </div>
-      {/* <Divider
-        orientation="left"
-        style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '5px' }}
-      >
-        共{imgList.length}张图片，已勾选{checkedImg.length}张图片
-      </Divider>
-
-      <ImgListShow list={imgList} getChecked={getCheckedImg} /> */}
-      <div>{html}</div>
     </div>
   );
 };
