@@ -1,2 +1,2 @@
-项目框架来源于：https://github.com/lxieyang/chrome-extension-boilerplate-react。
-在原项目的基础下进行了简单的修改
+# LKB-Chrome-Extension
+这是一个chrome插件，可实现LKB商户后台代理本地子应用版本号。
